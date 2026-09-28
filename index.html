@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harkness Spiderweb</title>
+<meta name="description" content="Map who speaks to whom during a Harkness discussion. Tap each speaker to draw the spiderweb, tag contributions, and review participation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="20" rx="15" ry="10" fill="var(--table)" stroke="var(--table-edge)" stroke-width="1.5"/>
+      <path d="M6 12 L33 27 M8 29 L30 9 M20 4 L20 36 M4 20 L36 20" stroke="var(--web)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-text">
+      <label for="title" class="sr-only">Discussion title</label>
+      <input id="title" class="title-input" type="text" autocomplete="off" spellcheck="false">
+      <div class="meta"><span id="date"></span><span id="sample-flag" class="pill pill-hl" hidden>Example</span></div>
+    </div>
+  </div>
+
+  <div class="timer" aria-label="Discussion timer">
+    <span id="clock" class="clock mono">00:00</span>
+    <button id="timer-btn" class="btn btn-quiet" type="button">Start timer</button>
+    <button id="timer-reset" class="btn btn-quiet btn-icon" type="button" title="Reset timer" aria-label="Reset timer">↺</button>
+  </div>
+
+  <div class="seg" role="group" aria-label="Mode">
+    <button id="mode-record" class="seg-btn" type="button" aria-pressed="true">Record</button>
+    <button id="mode-arrange" class="seg-btn" type="button" aria-pressed="false">Arrange seats</button>
+  </div>
+
+  <div class="actions">
+    <button id="undo" class="btn" type="button" title="Undo last turn (Ctrl+Z)">Undo</button>
+    <button id="export-png" class="btn" type="button">Save image</button>
+    <button id="new-btn" class="btn btn-primary" type="button">New discussion</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage" aria-label="Table">
+    <div id="sample-banner" class="banner" hidden>
+      <span>This is an example discussion so you can see how the map reads.</span>
+      <button id="sample-start" class="btn btn-primary btn-sm" type="button">Start your own</button>
+    </div>
+    <p id="hint" class="hint"></p>
+    <div class="board-wrap" id="board-wrap">
+      <svg id="board" viewBox="0 0 1000 720" role="group" aria-label="Spiderweb map of the discussion"></svg>
+    </div>
+
+    <div class="tagbar" id="tagbar">
+      <div class="latest" id="latest">No turns yet</div>
+      <div class="tags" role="group" aria-label="Tag the latest turn" id="tag-buttons"></div>
+    </div>
+
+    <div class="replay">
+      <label for="replay">Replay</label>
+      <input id="replay" type="range" min="0" max="0" value="0" step="1">
+      <span id="replay-label" class="mono replay-label"></span>
+      <button id="replay-live" class="btn btn-sm btn-quiet" type="button" hidden>Back to live</button>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="tabs" role="tablist" aria-label="Panels">
+      <button class="tab" role="tab" id="tab-btn-summary" aria-controls="tab-summary" aria-selected="true" data-tab="summary">Summary</button>
+      <button class="tab" role="tab" id="tab-btn-log" aria-controls="tab-log" aria-selected="false" data-tab="log">Log</button>
+      <button class="tab" role="tab" id="tab-btn-roster" aria-controls="tab-roster" aria-selected="false" data-tab="roster">Roster</button>
+      <button class="tab" role="tab" id="tab-btn-saved" aria-controls="tab-saved" aria-selected="false" data-tab="saved">Saved</button>
+    </div>
+
+    <div class="tab-panel" id="tab-summary" role="tabpanel" aria-labelledby="tab-btn-summary"></div>
+    <div class="tab-panel" id="tab-log" role="tabpanel" aria-labelledby="tab-btn-log" hidden></div>
+    <div class="tab-panel" id="tab-roster" role="tabpanel" aria-labelledby="tab-btn-roster" hidden>
+      <form id="add-form" class="add-form">
+        <label for="add-name" class="sr-only">Participant name</label>
+        <input id="add-name" type="text" placeholder="Add a participant" autocomplete="off">
+        <button class="btn btn-primary" type="submit">Add</button>
+      </form>
+      <ul id="roster-list" class="roster-list"></ul>
+      <div class="roster-tools">
+        <button id="spread" class="btn" type="button">Spread seats evenly</button>
+        <button id="shuffle" class="btn" type="button">Shuffle seating</button>
+      </div>
+      <details class="bulk">
+        <summary>Paste a whole class list</summary>
+        <label for="bulk-names" class="sr-only">Names, one per line or separated by commas</label>
+        <textarea id="bulk-names" rows="6" placeholder="One name per line, or separated by commas"></textarea>
+        <button id="bulk-add" class="btn" type="button">Add these names</button>
+      </details>
+    </div>
+    <div class="tab-panel" id="tab-saved" role="tabpanel" aria-labelledby="tab-btn-saved" hidden>
+      <p class="note">Discussions save automatically in this browser.</p>
+      <ul id="saved-list" class="saved-list"></ul>
+      <div class="file-tools">
+        <button id="copy-summary" class="btn" type="button">Copy text summary</button>
+        <button id="export-json" class="btn" type="button">Export file</button>
+        <label class="btn file-btn" for="import-json">Import file</label>
+        <input id="import-json" type="file" accept="application/json,.json" class="sr-only">
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body" class="modal-body"></div>
+    <div id="modal-actions" class="modal-actions"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

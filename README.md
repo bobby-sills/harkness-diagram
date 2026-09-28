@@ -35,6 +35,9 @@ host the folder on any static host (GitHub Pages works as-is).
    discussions and can export/import a `.harkness.json` file to move data
    between devices or back it up. It can also copy a plain-text summary.
 
+The sun/moon button in the header switches between light and dark mode; the
+choice is remembered. Until you pick one, the app follows your device setting.
+
 Data stays in the browser's local storage. Nothing is sent anywhere.
 
 ## Files

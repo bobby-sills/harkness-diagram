@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="styles.css">
+<script>try{var t=localStorage.getItem("harkness.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 </head>
 <body>
 <header class="bar">
@@ -36,6 +37,10 @@
   </div>
 
   <div class="actions">
+    <button id="theme-btn" class="btn btn-icon theme-btn" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+      <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+    </button>
     <button id="undo" class="btn" type="button" title="Undo last turn (Ctrl+Z)">Undo</button>
     <button id="export-png" class="btn" type="button">Save image</button>
     <button id="new-btn" class="btn btn-primary" type="button">New discussion</button>

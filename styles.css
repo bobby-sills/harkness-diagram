@@ -134,6 +134,11 @@ button, input, textarea { font: inherit; color: inherit; }
 .btn-quiet { background: transparent; }
 .btn-sm { padding: 4px 10px; font-size: .85rem; }
 .btn-icon { padding: 6px 10px; }
+.theme-btn { flex: none !important; padding: 6px 9px; }
+.theme-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.theme-btn .icon-sun { display: none; }
+.theme-btn[aria-pressed="true"] .icon-sun { display: block; }
+.theme-btn[aria-pressed="true"] .icon-moon { display: none; }
 
 /* ---------- Layout ---------- */
 .layout {

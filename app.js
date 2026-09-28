@@ -948,9 +948,32 @@
     }
   }, true);
 
+  // ---------- Theme ----------
+  const THEME_KEY = 'harkness.theme';
+  const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function effectiveTheme() {
+    const t = document.documentElement.getAttribute('data-theme');
+    if (t === 'light' || t === 'dark') return t;
+    return darkQuery && darkQuery.matches ? 'dark' : 'light';
+  }
+  function renderThemeBtn() {
+    const dark = effectiveTheme() === 'dark';
+    const b = $('#theme-btn');
+    const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    b.setAttribute('aria-pressed', String(dark));
+    b.setAttribute('aria-label', label);
+    b.title = label;
+  }
+  $('#theme-btn').addEventListener('click', () => {
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { storage()?.setItem(THEME_KEY, next); } catch { /* storage unavailable */ }
+  });
+  try { const t = storage()?.getItem(THEME_KEY); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch { /* storage unavailable */ }
+
   // Re-render the board when the colour theme changes
-  const rerenderTheme = () => renderBoard();
-  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rerenderTheme); } catch { /* old browser */ }
+  const rerenderTheme = () => { renderBoard(); renderThemeBtn(); };
+  try { darkQuery.addEventListener('change', rerenderTheme); } catch { /* old browser */ }
   new MutationObserver(rerenderTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
   if (document.fonts?.ready) document.fonts.ready.then(() => renderBoard());
 
@@ -960,4 +983,5 @@
   state = (cur && all[cur]) || Object.values(all).sort((a, b) => b.updated - a.updated)[0] || null;
   if (!state) { state = sampleState(); all[state.id] = state; saveAll(); }
   renderAll();
+  renderThemeBtn();
 })();

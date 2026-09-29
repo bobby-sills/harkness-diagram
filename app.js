@@ -62,7 +62,7 @@
 
   function makeState(participants = [], title) {
     const now = Date.now();
-    return { v: 1, id: uid(), title: title || defaultTitle(), created: now, updated: now, participants, turns: [], timer: { elapsed: 0, since: null }, sample: false };
+    return { v: 1, id: uid(), title: title || defaultTitle(), created: now, updated: now, participants, turns: [], timer: { elapsed: 0, since: null } };
   }
 
   function evenSeats(n) {
@@ -72,18 +72,6 @@
       pts.push({ x: CENTER.x + ORBIT.rx * Math.cos(a), y: CENTER.y + ORBIT.ry * Math.sin(a) });
     }
     return pts;
-  }
-
-  function sampleState() {
-    const names = ['Amara', 'Ben', 'Chloé', 'Dev', 'Eli', 'Fatima', 'Gus', 'Hana', 'Iris', 'Jonah'];
-    const seats = evenSeats(names.length);
-    const s = makeState(names.map((name, i) => ({ id: uid(), name, x: seats[i].x, y: seats[i].y })), 'Example: The Great Gatsby, ch. 7');
-    const seq = [0, 3, 5, 3, 1, 7, 3, 5, 2, 0, 3, 8, 5, 1, 3, 0, 7, 2, 5, 3, 8, 0, 1, 3, 7, 5];
-    const tags = { 0: ['q'], 2: ['t'], 5: ['q'], 8: ['t', 'b'], 11: ['b'], 13: ['i'], 16: ['q'], 19: ['t'], 22: ['b'], 24: ['q'] };
-    s.turns = seq.map((p, i) => ({ pid: s.participants[p].id, t: i * 47000 + ((i * 7919) % 20000), tags: tags[i] || [] }));
-    s.timer.elapsed = s.turns[s.turns.length - 1].t + 31000;
-    s.sample = true;
-    return s;
   }
 
   function normalize(s) {
@@ -99,7 +87,7 @@
     s.title = typeof s.title === 'string' && s.title.trim() ? s.title.slice(0, 120) : defaultTitle();
     s.created = +s.created || Date.now();
     s.updated = +s.updated || s.created;
-    s.sample = !!s.sample;
+    delete s.sample;
     s.v = 1;
     return s;
   }
@@ -290,8 +278,6 @@
     const title = $('#title');
     if (document.activeElement !== title) title.value = state.title;
     $('#date').textContent = fmtDate(state.created);
-    $('#sample-flag').hidden = !state.sample;
-    $('#sample-banner').hidden = !state.sample;
     $('#undo').disabled = !state.turns.length;
     $('#mode-record').setAttribute('aria-pressed', String(mode === 'record'));
     $('#mode-arrange').setAttribute('aria-pressed', String(mode === 'arrange'));
@@ -591,7 +577,7 @@
         {
           label: hasPeople ? 'Same seating' : 'Start', primary: true,
           onClick: () => {
-            const people = state.sample ? [] : state.participants.map((p) => ({ ...p }));
+            const people = state.participants.map((p) => ({ ...p }));
             switchTo(makeState(people));
             if (!people.length) { activeTab = 'roster'; renderPanel(); $('#add-name').focus(); }
           },
@@ -810,7 +796,6 @@
   $('#mode-arrange').addEventListener('click', () => setMode('arrange'));
   $('#undo').addEventListener('click', undo);
   $('#new-btn').addEventListener('click', newDiscussion);
-  $('#sample-start').addEventListener('click', newDiscussion);
   $('#export-png').addEventListener('click', exportImage);
   $('#export-json').addEventListener('click', exportJSON);
   $('#copy-summary').addEventListener('click', () => copyText(summaryText(), 'Summary copied'));
@@ -932,9 +917,10 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('#modal').hidden) { closeModal(); return; }
+    if (e.key === 'Escape' && tourStep >= 0) { endTour(); return; }
     const typing = /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
-    if (typing || e.ctrlKey || e.metaKey || e.altKey || !$('#modal').hidden) return;
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || !$('#modal').hidden || tourStep >= 0) return;
     const g = TAGS.find((x) => x.key.toLowerCase() === e.key.toLowerCase());
     if (g) toggleTag(g.id);
   });
@@ -947,6 +933,73 @@
       if (activeTab === 'saved') renderSaved();
     }
   }, true);
+
+
+  // ---------- First-visit tour ----------
+  const TOUR_KEY = 'harkness.toured';
+  const TOUR = [
+    { target: '#add-form', tab: 'roster', title: 'Add your class', text: 'Type each person at the table and press Add. To add a whole class list at once, use “Paste a whole class list” below.' },
+    { target: '#mode-arrange', title: 'Match the seating', text: 'Switch to Arrange seats and drag each seat to where that person is actually sitting.' },
+    { target: '#board-wrap', title: 'Tap whoever speaks', text: 'In Record mode, tap a seat each time someone talks. A line joins each speaker to the one before, and it thickens when the same two people go back and forth.' },
+    { target: '#tag-buttons', title: 'Tag a turn', text: 'Mark the latest turn as a question, a text citation, building on a peer, or an interruption. The Q, T, B and I keys work too.' },
+    { target: '#undo', title: 'Fix a mis-tap', text: 'Undo removes the last turn. You can delete any turn from the Log tab.' },
+    { target: '#tab-btn-summary', tab: 'summary', title: 'Check the balance', text: 'Summary shows who has spoken, who hasn’t yet, and how evenly the talk is shared.' },
+    { target: '#export-png', title: 'Keep a record', text: 'Save an image of the map to share with students. Discussions also save automatically in this browser under the Saved tab.' },
+  ];
+  let tourStep = -1;
+  const tip = $('#tour');
+
+  function startTour() {
+    closeModal();
+    tourStep = 0;
+    showTourStep();
+  }
+  function endTour() {
+    tourStep = -1;
+    tip.hidden = true;
+    document.querySelector('.tour-target')?.classList.remove('tour-target');
+    try { storage()?.setItem(TOUR_KEY, '1'); } catch { /* storage unavailable */ }
+  }
+  function showTourStep() {
+    const step = TOUR[tourStep];
+    if (step.tab && activeTab !== step.tab) { activeTab = step.tab; renderPanel(); }
+    document.querySelector('.tour-target')?.classList.remove('tour-target');
+    const target = $(step.target);
+    target.classList.add('tour-target');
+    $('#tour-count').textContent = `${tourStep + 1} of ${TOUR.length}`;
+    $('#tour-title').textContent = step.title;
+    $('#tour-text').textContent = step.text;
+    $('#tour-back').hidden = tourStep === 0;
+    $('#tour-next').textContent = tourStep === TOUR.length - 1 ? 'Got it' : 'Next';
+    tip.hidden = false;
+    target.scrollIntoView({ block: 'center', behavior: 'instant' });
+    placeTip();
+    $('#tour-next').focus({ preventScroll: true });
+  }
+  function placeTip() {
+    if (tourStep < 0) return;
+    const r = $(TOUR[tourStep].target).getBoundingClientRect();
+    const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    const tw = tip.offsetWidth, th = tip.offsetHeight, gap = 14, edge = 16;
+    let below = r.bottom + gap + th <= vh - edge || r.top - gap - th < edge;
+    // A target taller than the screen (the map on a phone): pin the tip inside it
+    let top = below ? r.bottom + gap : r.top - gap - th;
+    top = clamp(top, edge, vh - th - edge);
+    const cx = r.left + r.width / 2;
+    const left = clamp(cx - tw / 2, edge, vw - tw - edge);
+    tip.style.top = top + 'px';
+    tip.style.left = left + 'px';
+    const arrowX = clamp(cx - left, 18, tw - 18);
+    tip.style.setProperty('--arrow-x', arrowX + 'px');
+    const overlaps = top < r.bottom && top + th > r.top;
+    tip.dataset.side = overlaps ? 'none' : below ? 'below' : 'above';
+  }
+  $('#tour-next').addEventListener('click', () => { if (tourStep >= TOUR.length - 1) endTour(); else { tourStep++; showTourStep(); } });
+  $('#tour-back').addEventListener('click', () => { if (tourStep > 0) { tourStep--; showTourStep(); } });
+  $('#tour-skip').addEventListener('click', endTour);
+  $('#help-btn').addEventListener('click', startTour);
+  window.addEventListener('resize', placeTip);
+  window.addEventListener('scroll', placeTip, { passive: true });
 
   // ---------- Theme ----------
   const THEME_KEY = 'harkness.theme';
@@ -978,10 +1031,15 @@
   if (document.fonts?.ready) document.fonts.ready.then(() => renderBoard());
 
   // ---------- Boot ----------
-  for (const k of Object.keys(all)) { const s = normalize(all[k]); if (s) all[k] = s; else delete all[k]; }
+  // Older versions stored an example discussion; drop it along with anything unreadable
+  for (const k of Object.keys(all)) { const s = all[k]?.sample ? null : normalize(all[k]); if (s) all[k] = s; else delete all[k]; }
   const cur = loadCurrentId();
   state = (cur && all[cur]) || Object.values(all).sort((a, b) => b.updated - a.updated)[0] || null;
-  if (!state) { state = sampleState(); all[state.id] = state; saveAll(); }
+  if (!state) { state = makeState(); all[state.id] = state; saveAll(); }
+  if (!state.participants.length) activeTab = 'roster';
   renderAll();
   renderThemeBtn();
+  let toured = false;
+  try { toured = storage()?.getItem(TOUR_KEY) === '1'; } catch { /* storage unavailable */ }
+  if (!toured) startTour();
 })();

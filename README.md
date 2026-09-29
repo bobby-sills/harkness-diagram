@@ -10,6 +10,9 @@ host the folder on any static host (GitHub Pages works as-is).
 
 ## Using it
 
+The app opens on an empty table. On the first visit a short tour points out
+each control; the **?** button in the header replays it any time.
+
 1. **Roster tab**: add the people at the table one at a time, or paste a
    whole class list (one name per line or comma-separated). Seats are spread
    evenly around the table.

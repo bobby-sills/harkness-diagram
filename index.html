@@ -21,7 +21,7 @@
     <div class="brand-text">
       <label for="title" class="sr-only">Discussion title</label>
       <input id="title" class="title-input" type="text" autocomplete="off" spellcheck="false">
-      <div class="meta"><span id="date"></span><span id="sample-flag" class="pill pill-hl" hidden>Example</span></div>
+      <div class="meta"><span id="date"></span></div>
     </div>
   </div>
 
@@ -37,6 +37,7 @@
   </div>
 
   <div class="actions">
+    <button id="help-btn" class="btn btn-icon help-btn" type="button" aria-label="Show the tour" title="Show the tour">?</button>
     <button id="theme-btn" class="btn btn-icon theme-btn" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
       <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
@@ -49,10 +50,6 @@
 
 <main class="layout">
   <section class="stage" aria-label="Table">
-    <div id="sample-banner" class="banner" hidden>
-      <span>This is an example discussion so you can see how the map reads.</span>
-      <button id="sample-start" class="btn btn-primary btn-sm" type="button">Start your own</button>
-    </div>
     <p id="hint" class="hint"></p>
     <div class="board-wrap" id="board-wrap">
       <svg id="board" viewBox="0 0 1000 720" role="group" aria-label="Spiderweb map of the discussion"></svg>
@@ -117,6 +114,18 @@
     <h2 id="modal-title"></h2>
     <div id="modal-body" class="modal-body"></div>
     <div id="modal-actions" class="modal-actions"></div>
+  </div>
+</div>
+
+<div id="tour" class="tour" role="dialog" aria-labelledby="tour-title" aria-describedby="tour-text" hidden>
+  <div class="tour-count mono" id="tour-count"></div>
+  <h2 id="tour-title" class="tour-title"></h2>
+  <p id="tour-text" class="tour-text"></p>
+  <div class="tour-actions">
+    <button id="tour-skip" class="btn btn-sm btn-quiet" type="button">Skip tour</button>
+    <span class="tour-spacer"></span>
+    <button id="tour-back" class="btn btn-sm" type="button">Back</button>
+    <button id="tour-next" class="btn btn-sm btn-primary" type="button">Next</button>
   </div>
 </div>
 

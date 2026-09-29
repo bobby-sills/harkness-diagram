@@ -408,13 +408,12 @@
     const focused = document.activeElement?.dataset?.rename;
     list.innerHTML = state.participants.map((p, i) => {
       const c = a.counts.get(p.id) || 0;
-      const armedHere = armed === 'rm:' + p.id;
       return `<li>
         <span class="seatno">${i + 1}</span>
         <label class="sr-only" for="rn-${esc(p.id)}">Name for seat ${i + 1}</label>
         <input id="rn-${esc(p.id)}" type="text" value="${esc(p.name)}" data-rename="${esc(p.id)}" autocomplete="off">
         <span class="cnt" title="Turns">${c}</span>
-        <button class="btn btn-sm btn-danger${armedHere ? ' armed' : ''}" type="button" data-remove="${esc(p.id)}">${armedHere ? (c ? `Remove + ${c} turns` : 'Confirm') : 'Remove'}</button>
+        <button class="btn btn-sm btn-danger" type="button" data-remove="${esc(p.id)}" aria-label="Remove ${esc(p.name)}">Remove</button>
       </li>`;
     }).join('') || '<li class="empty">Nobody at the table yet.</li>';
     if (focused) list.querySelector(`[data-rename="${CSS.escape(focused)}"]`)?.focus();
@@ -877,8 +876,10 @@
     const b = e.target.closest('[data-remove]');
     if (!b) return;
     const id = b.dataset.remove;
-    if (armed === 'rm:' + id) { armed = null; const name = byId(id)?.name; removePerson(id); toast(`Removed ${name}`); }
-    else { armed = 'rm:' + id; renderRoster(); }
+    const name = byId(id)?.name;
+    const n = state.turns.filter((t) => t.pid === id).length;
+    removePerson(id);
+    toast(n ? `Removed ${name} and ${n} ${n === 1 ? 'turn' : 'turns'}` : `Removed ${name}`);
   });
   $('#spread').addEventListener('click', () => { spread(); persist(); renderBoard(); toast('Seats spread evenly'); });
   $('#shuffle').addEventListener('click', () => {
@@ -927,7 +928,7 @@
 
   // Clicking anywhere else disarms two-step buttons
   document.addEventListener('click', (e) => {
-    if (armed && !e.target.closest('[data-remove],[data-delete]')) {
+    if (armed && !e.target.closest('[data-delete]')) {
       armed = null;
       if (activeTab === 'roster') renderRoster();
       if (activeTab === 'saved') renderSaved();

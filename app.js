@@ -199,7 +199,13 @@
     board.classList.toggle('arranging', mode === 'arrange');
 
     const defs = el('defs', {}, board);
-    const marker = el('marker', { id: 'arrow', viewBox: '0 0 10 10', refX: '8.5', refY: '5', markerWidth: '5', markerHeight: '5', orient: 'auto-start-reverse' }, defs);
+    const edgeWidth = (w) => Math.min(1.8 + (w - 1) * 1.6, 11);
+    const last = turns[turns.length - 1];
+    const prevTurn = turns[turns.length - 2];
+    const latestKey = last && prevTurn && prevTurn.pid !== last.pid ? [prevTurn.pid, last.pid].sort().join('|') : null;
+    const latestWidth = latestKey ? Math.max(4.5, edgeWidth(a.edges.get(latestKey) || 1)) : 0;
+    const arrowSize = 14 + latestWidth * 1.6;
+    const marker = el('marker', { id: 'arrow', viewBox: '0 0 10 10', refX: '1', refY: '5', markerUnits: 'userSpaceOnUse', markerWidth: arrowSize.toFixed(1), markerHeight: arrowSize.toFixed(1), orient: 'auto' }, defs);
     el('path', { d: 'M0,0 L10,5 L0,10 z', fill: c.latest }, marker);
 
     // Table
@@ -220,20 +226,20 @@
     // Web lines
     const webG = el('g', { 'stroke-linecap': 'round' }, board);
     for (const [key, w] of a.edges) {
+      if (key === latestKey) continue; // drawn in gold below, at the same thickness
       const [p1, p2] = key.split('|').map(byId);
       if (!p1 || !p2) continue;
       const s = shorten(p1, p2, R, R);
-      el('line', { ...s, stroke: c.web, 'stroke-width': Math.min(1.8 + (w - 1) * 1.6, 11).toFixed(1), opacity: '0.62' }, webG);
+      el('line', { ...s, stroke: c.web, 'stroke-width': edgeWidth(w).toFixed(1), opacity: '0.62' }, webG);
     }
 
-    // Latest exchange: one gold line with a direction arrow
-    const last = turns[turns.length - 1];
-    const prevTurn = turns[turns.length - 2];
-    if (last && prevTurn && prevTurn.pid !== last.pid) {
+    // Latest exchange: one gold line, as thick as that pair's web line, ending in an arrow
+    if (latestKey) {
       const p1 = byId(prevTurn.pid), p2 = byId(last.pid);
       if (p1 && p2) {
-        const s = shorten(p1, p2, R + 2, R + 4);
-        el('line', { ...s, stroke: c.latest, 'stroke-width': '4.5', 'stroke-linecap': 'round', 'marker-end': 'url(#arrow)' }, board);
+        // Stop the line where the arrowhead starts so its end cap never shows past the tip
+        const s = shorten(p1, p2, R, R + 3 + arrowSize * 0.9);
+        el('line', { ...s, stroke: c.latest, 'stroke-width': latestWidth.toFixed(1), 'stroke-linecap': 'round', 'marker-end': 'url(#arrow)' }, board);
       }
     }
 

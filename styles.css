@@ -194,6 +194,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .replay label { font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; }
 .replay input[type="range"] { flex: 1 1 160px; accent-color: var(--web); }
 .replay-label { min-width: 11ch; }
+.replay-live.is-idle { visibility: hidden; }
 
 /* ---------- Panel ---------- */
 .panel {

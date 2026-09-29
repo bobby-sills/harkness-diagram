@@ -337,7 +337,10 @@
     r.value = String(replay == null ? n : replay);
     r.disabled = n === 0;
     $('#replay-label').textContent = replay == null ? (n ? 'Live' : '–') : `${replay} / ${n}`;
-    $('#replay-live').hidden = replay == null;
+    // Keep the button's space reserved so the slider never changes width mid-drag
+    const liveBtn = $('#replay-live');
+    liveBtn.classList.toggle('is-idle', replay == null);
+    liveBtn.disabled = replay == null;
   }
 
   function renderSummary() {

@@ -10,6 +10,7 @@
   --on-web: #FFFFFF;
   --hl: #F5C518;
   --on-hl: #1B2624;
+  --latest: #D19A00;
   --table: #CFAE82;
   --table-edge: #9A7246;
   --table-grain: #BE9A6B;
@@ -37,6 +38,7 @@
     --on-web: #0E1A33;
     --hl: #E8B90F;
     --on-hl: #1B2624;
+    --latest: #F2C230;
     --table: #4B3827;
     --table-edge: #7A5A3C;
     --table-grain: #57412D;
@@ -60,6 +62,7 @@
   --on-web: #0E1A33;
   --hl: #E8B90F;
   --on-hl: #1B2624;
+  --latest: #F2C230;
   --table: #4B3827;
   --table-edge: #7A5A3C;
   --table-grain: #57412D;
@@ -88,7 +91,8 @@ body {
 }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 button, input, textarea { font: inherit; color: inherit; }
-:focus-visible { outline: 3px solid var(--web); outline-offset: 2px; }
+/* Focus rings sit on the element's own edge (covering its border) so there is only ever one outline */
+:focus-visible { outline: 3px solid var(--web); outline-offset: -1px; }
 
 /* ---------- Header ---------- */
 .bar {
@@ -161,7 +165,7 @@ button, input, textarea { font: inherit; color: inherit; }
 #board.arranging .seat { cursor: grab; }
 #board.arranging .seat.dragging { cursor: grabbing; }
 #board .seat:focus { outline: none; }
-#board .seat:focus-visible .seat-focus { stroke: var(--web); }
+#board .seat:focus-visible .seat-body { stroke: var(--web); stroke-width: 5px; stroke-dasharray: none; }
 #board .seat:hover .seat-body { filter: brightness(.97); }
 @keyframes pulse { from { transform: scale(1.18); } to { transform: scale(1); } }
 #board .seat.pulse .seat-scale { animation: pulse .35s ease-out; transform-box: fill-box; transform-origin: center; }
@@ -278,7 +282,10 @@ button, input, textarea { font: inherit; color: inherit; }
 
 /* ---------- First-visit tour ---------- */
 .help-btn { flex: none !important; width: 36px; padding: 6px 0; font-family: var(--font-display); font-weight: 800; }
-.tour-target { position: relative; z-index: 15; outline: 3px solid var(--hl); outline-offset: 4px; border-radius: 8px; }
+.tour-target { position: relative; z-index: 15; outline: 3px solid var(--latest); outline-offset: 6px; border-radius: 8px; }
+/* Controls with their own edge get the ring on that edge instead of a second ring around it */
+.btn.tour-target, .seg-btn.tour-target, .tab.tour-target, input.tour-target { outline-offset: -1px; border-color: var(--latest); }
+.tab.tour-target { border-radius: 8px 8px 0 0; }
 .tour {
   position: fixed; z-index: 25; width: min(320px, calc(100vw - 32px));
   background: var(--ink); color: var(--bg); border-radius: 12px; padding: 14px 16px 12px;
@@ -299,7 +306,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .tour .btn { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); }
 .tour .btn-quiet { border-color: transparent; padding-inline: 4px; opacity: .8; }
 .tour .btn-primary { background: var(--hl); border-color: var(--hl); color: var(--on-hl); }
-.tour .btn:focus-visible { outline-color: var(--hl); }
+.tour .btn:focus-visible { outline-color: var(--bg); }
 
 /* ---------- Modal & toast ---------- */
 .modal {

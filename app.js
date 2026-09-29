@@ -162,7 +162,7 @@
     const cs = getComputedStyle(document.documentElement);
     const g = (n) => cs.getPropertyValue(n).trim();
     return {
-      ink: g('--ink'), muted: g('--muted'), web: g('--web'), onWeb: g('--on-web'), hl: g('--hl'), onHl: g('--on-hl'),
+      ink: g('--ink'), muted: g('--muted'), web: g('--web'), onWeb: g('--on-web'), hl: g('--hl'), onHl: g('--on-hl'), latest: g('--latest'),
       table: g('--table'), tableEdge: g('--table-edge'), grain: g('--table-grain'), seat: g('--seat'), silent: g('--silent'),
       line: g('--line'),
     };
@@ -200,7 +200,7 @@
 
     const defs = el('defs', {}, board);
     const marker = el('marker', { id: 'arrow', viewBox: '0 0 10 10', refX: '8.5', refY: '5', markerWidth: '5', markerHeight: '5', orient: 'auto-start-reverse' }, defs);
-    el('path', { d: 'M0,0 L10,5 L0,10 z', fill: c.web }, marker);
+    el('path', { d: 'M0,0 L10,5 L0,10 z', fill: c.latest }, marker);
 
     // Table
     el('ellipse', { cx: CENTER.x, cy: CENTER.y + 6, rx: TABLE.rx, ry: TABLE.ry, fill: c.tableEdge, opacity: '0.35' }, board);
@@ -226,15 +226,14 @@
       el('line', { ...s, stroke: c.web, 'stroke-width': Math.min(1.8 + (w - 1) * 1.6, 11).toFixed(1), opacity: '0.62' }, webG);
     }
 
-    // Latest exchange: highlighter stroke with direction arrow
+    // Latest exchange: one gold line with a direction arrow
     const last = turns[turns.length - 1];
     const prevTurn = turns[turns.length - 2];
     if (last && prevTurn && prevTurn.pid !== last.pid) {
       const p1 = byId(prevTurn.pid), p2 = byId(last.pid);
       if (p1 && p2) {
-        const s = shorten(p1, p2, R + 2, R + 6);
-        el('line', { ...s, stroke: c.hl, 'stroke-width': '14', 'stroke-linecap': 'round', opacity: '0.75' }, board);
-        el('line', { ...s, stroke: c.web, 'stroke-width': '3', 'stroke-linecap': 'round', 'marker-end': 'url(#arrow)' }, board);
+        const s = shorten(p1, p2, R + 2, R + 4);
+        el('line', { ...s, stroke: c.latest, 'stroke-width': '4.5', 'stroke-linecap': 'round', 'marker-end': 'url(#arrow)' }, board);
       }
     }
 
@@ -249,11 +248,10 @@
         'aria-label': mode === 'arrange' ? `${p.name}, seat ${idx + 1}. Drag to move.` : `${p.name}, ${count} ${count === 1 ? 'turn' : 'turns'}. Record a turn.`,
       }, board);
       const inner = el('g', { class: 'seat-scale' }, g);
-      el('circle', { class: 'seat-focus', r: R + 7, fill: 'transparent', stroke: 'transparent', 'stroke-width': '3' }, inner);
-      if (isLast) el('circle', { r: R + 5, fill: c.hl }, inner);
+      el('circle', { class: 'seat-hit', r: R + 7, fill: 'transparent' }, inner);
       el('circle', {
         class: 'seat-body', r: R, fill: c.seat,
-        stroke: count ? c.ink : c.silent, 'stroke-width': count ? '2.5' : '2',
+        stroke: isLast ? c.latest : count ? c.ink : c.silent, 'stroke-width': isLast ? '5' : count ? '2.5' : '2',
         'stroke-dasharray': count ? 'none' : '5 5',
       }, inner);
       const { label, size } = seatLabel(p.name, R);
@@ -263,7 +261,7 @@
       title.textContent = p.name;
       if (count) {
         const bx = R * 0.72, by = -R * 0.72, br = clamp(R * 0.38, 12, 16);
-        el('circle', { cx: bx, cy: by, r: br, fill: c.web, stroke: c.seat, 'stroke-width': '2' }, inner);
+        el('circle', { cx: bx, cy: by, r: br, fill: c.web }, inner);
         const bt = el('text', { x: bx, y: by + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: c.onWeb, 'font-family': FONT_BODY, 'font-weight': '700', 'font-size': (br * 1.05).toFixed(1) }, inner);
         bt.textContent = count;
       }
@@ -644,7 +642,7 @@
     svg.setAttribute('xmlns', SVGNS);
     svg.setAttribute('width', '2000');
     svg.setAttribute('height', '1440');
-    svg.querySelectorAll('.seat-focus').forEach((n) => n.remove());
+    svg.querySelectorAll('.seat-hit').forEach((n) => n.remove());
     const xml = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
@@ -939,7 +937,7 @@
   // ---------- First-visit tour ----------
   const TOUR_KEY = 'harkness.toured';
   const TOUR = [
-    { target: '#add-form', tab: 'roster', title: 'Add your class', text: 'Type each person at the table and press Add. To add a whole class list at once, use “Paste a whole class list” below.' },
+    { target: '#add-name', tab: 'roster', title: 'Add your class', text: 'Type each person at the table and press Add. To add a whole class list at once, use “Paste a whole class list” below.' },
     { target: '#mode-arrange', title: 'Match the seating', text: 'Switch to Arrange seats and drag each seat to where that person is actually sitting.' },
     { target: '#board-wrap', title: 'Tap whoever speaks', text: 'In Record mode, tap a seat each time someone talks. A line joins each speaker to the one before, and it thickens when the same two people go back and forth.' },
     { target: '#tag-buttons', title: 'Tag a turn', text: 'Mark the latest turn as a question, a text citation, building on a peer, or an interruption. The Q, T, B and I keys work too.' },
